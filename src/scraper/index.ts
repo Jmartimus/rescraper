@@ -3,7 +3,7 @@ import { type Listing } from '../types';
 
 export const getListingData = async (page: Page): Promise<Listing[]> => {
   const listingData: Listing[] = await page.evaluate(() => {
-    // SELECTORS - need to be defined here within the browser context
+    // SELECTORS - need to be defined here within the browser context because they can't be pulled from the node context
     const LISTING_LIST_SELECTOR = '[data-testid="card-content"]' as const;
     const LISTING_PRICE_SELECTOR = '[data-testid="card-price"]' as const;
     const LISTING_BEDS_SELECTOR = '[data-testid="property-meta-beds"]' as const;
@@ -16,15 +16,7 @@ export const getListingData = async (page: Page): Promise<Listing[]> => {
     const listingList = document.querySelectorAll(LISTING_LIST_SELECTOR);
     return Array.from(listingList)
       .map((listing: Element) => {
-        const priceEl: Element | null = listing.querySelector(LISTING_PRICE_SELECTOR);
-        const bedsEl: Element | null = listing.querySelector(LISTING_BEDS_SELECTOR);
-        const bathsEl: Element | null = listing.querySelector(LISTING_BATHS_SELECTOR);
-        const sqftEl: Element | null = listing.querySelector(LISTING_SQFT_SELECTOR);
-        const lotSizeEl: Element | null = listing.querySelector(LISTING_LOT_SELECTOR);
-        const add1El: Element | null = listing.querySelector(LISTING_ADD1_SELECTOR);
-        const add2El: Element | null = listing.querySelector(LISTING_ADD2_SELECTOR);
-
-        const price: string = priceEl?.textContent ?? '';
+        const price: string = listing.querySelector(LISTING_PRICE_SELECTOR)?.textContent ?? '';
         const adjustedPrice: string = (parseFloat(price.replace(/[$,]/g, '')) * 0.7).toLocaleString(
           'en-US',
           {
@@ -33,15 +25,20 @@ export const getListingData = async (page: Page): Promise<Listing[]> => {
             maximumFractionDigits: 0,
           },
         );
-        const beds: string = (bedsEl?.textContent ?? '').replace(/^(\d[\d,.]*)[\s\S]*$/, '$1');
-        const baths: string = (bathsEl?.textContent ?? '').replace(/^(\d[\d,.]*)[\s\S]*$/, '$1');
-        const sqft: string = (sqftEl?.textContent ?? '').replace(/^(\d[\d,.]*)[\s\S]*$/, '$1');
-        const lotSize: string = (lotSizeEl?.textContent ?? '').replace(
-          /^(\d[\d,.]*)[\s\S]*$/,
-          '$1',
-        );
-        const add1: string = add1El?.textContent ?? '';
-        const add2: string = add2El?.textContent ?? '';
+        const beds: string = (
+          listing.querySelector(LISTING_BEDS_SELECTOR)?.textContent ?? ''
+        ).replace(/^(\d[\d,.]*)[\s\S]*$/, '$1');
+        const baths: string = (
+          listing.querySelector(LISTING_BATHS_SELECTOR)?.textContent ?? ''
+        ).replace(/^(\d[\d,.]*)[\s\S]*$/, '$1');
+        const sqft: string = (
+          listing.querySelector(LISTING_SQFT_SELECTOR)?.textContent ?? ''
+        ).replace(/^(\d[\d,.]*)[\s\S]*$/, '$1');
+        const lotSize: string = (
+          listing.querySelector(LISTING_LOT_SELECTOR)?.textContent ?? ''
+        ).replace(/^(\d[\d,.]*)[\s\S]*$/, '$1');
+        const add1: string = listing.querySelector(LISTING_ADD1_SELECTOR)?.textContent ?? '';
+        const add2: string = listing.querySelector(LISTING_ADD2_SELECTOR)?.textContent ?? '';
 
         return {
           price,

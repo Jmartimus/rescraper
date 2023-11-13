@@ -1,11 +1,6 @@
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 import { type listingDictionaryObject, type Sheets } from '../types';
-import {
-  addressColumnIndex,
-  addressColumnRange,
-  addressIndexFromData,
-  priceColumnRange,
-} from './constants';
+import { addressColumnRange, addressIndexFromData, priceColumnRange } from './constants';
 
 /**
  * Fetches prices and addresses data from a Google Sheet.
@@ -15,7 +10,7 @@ import {
  * @returns {Promise<{listingPrices: string[][] | null, listingAddresses: string[][] | null}>} - Promise resolving to an object containing listingPrices and listingAddresses arrays.
  * @throws {Error} - Throws an error if there is an issue fetching data from the Google Sheet.
  */
-const fetchPricesAndAddressesFromSheet = async (sheets: Sheets, spreadsheetId: string) => {
+export const fetchPricesAndAddressesFromSheet = async (sheets: Sheets, spreadsheetId: string) => {
   try {
     const existingValues = await sheets.spreadsheets.values.batchGet({
       spreadsheetId,
@@ -39,7 +34,7 @@ const fetchPricesAndAddressesFromSheet = async (sheets: Sheets, spreadsheetId: s
  * @param {string[][] | null} listingPrices - Array of listing prices.
  * @returns {listingDictionaryObject} - Dictionary object mapping listing addresses to listing objects.
  */
-const createListingDictionaryObject = (
+export const createListingDictionaryObject = (
   listingAddresses: string[][] | null,
   listingPrices: string[][] | null,
 ) => {
@@ -67,7 +62,7 @@ const createListingDictionaryObject = (
  * @param {listingDictionaryObject} dictionaryObject - Dictionary object of listing addresses.
  * @returns {{outdatedListings: number[], outdatedListingFormatRequests: Object[]}} - Object containing arrays of outdated listings and formatting requests.
  */
-const strikethroughOutdatedListings = (
+export const strikethroughOutdatedListings = (
   flattenedAddresses: string[],
   data: string[][],
   dictionaryObject: listingDictionaryObject,
@@ -124,7 +119,7 @@ const strikethroughOutdatedListings = (
  * @param {listingDictionaryObject} dictionaryObject - Dictionary object of listing addresses.
  * @returns {Object[]} - Array of update requests for price cells.
  */
-const updatePriceCellsRequests = (
+export const updatePriceCellsRequests = (
   data: string[][],
   flattenedAddresses: string[],
   dictionaryObject: listingDictionaryObject,
@@ -178,85 +173,4 @@ const updatePriceCellsRequests = (
     })
     .filter(Boolean)
     .flat();
-};
-
-/**
- * Appends new data to a Google Sheet, updates prices, strikes through outdated listings, and removes duplicates.
- *
- * @param {Sheets} sheets - Google Sheets API instance.
- * @param {string} spreadsheetId - ID of the Google Spreadsheet.
- * @param {string} range - Range to append data to.
- * @param {string[][]} data - Array of new data to append.
- */
-export const appendDataToSheet = async (
-  sheets: Sheets,
-  spreadsheetId: string,
-  range: string,
-  data: string[][],
-) => {
-  try {
-    const { listingPrices, listingAddresses } = await fetchPricesAndAddressesFromSheet(
-      sheets,
-      spreadsheetId,
-    );
-
-    const flattenedAddresses = listingAddresses ? listingAddresses.flat() : [];
-
-    const dictionaryObject = createListingDictionaryObject(listingAddresses, listingPrices);
-
-    // Append new data
-    await sheets.spreadsheets.values.append({
-      spreadsheetId,
-      range,
-      valueInputOption: 'RAW',
-      insertDataOption: 'INSERT_ROWS',
-      requestBody: {
-        values: data,
-      },
-    });
-
-    const { outdatedListingFormatRequests } = strikethroughOutdatedListings(
-      flattenedAddresses,
-      data,
-      dictionaryObject,
-    );
-
-    const updatePriceRequests = updatePriceCellsRequests(
-      data,
-      flattenedAddresses,
-      dictionaryObject,
-    );
-
-    const updateRequests = [
-      ...updatePriceRequests,
-      ...outdatedListingFormatRequests,
-      {
-        deleteDuplicates: {
-          range: {
-            sheetId: 0,
-          },
-          comparisonColumns: [
-            {
-              sheetId: 0,
-              dimension: 'COLUMNS',
-              startIndex: addressColumnIndex,
-              endIndex: 7,
-            },
-          ],
-        },
-      },
-    ];
-
-    // Remove dupes, update prices, strikethrough old data
-    const batchUpdateRequest = {
-      spreadsheetId,
-      resource: {
-        requests: updateRequests,
-      },
-    };
-
-    await sheets.spreadsheets.batchUpdate(batchUpdateRequest);
-  } catch (error) {
-    console.error('Error appending data to Google Sheet:', error);
-  }
 };
