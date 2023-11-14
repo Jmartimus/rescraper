@@ -18,4 +18,5 @@ export interface Listing {
   lotSize: string;
   add1: string;
   add2: string;
+  link: string;
 }

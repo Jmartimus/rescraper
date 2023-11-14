@@ -39,6 +39,8 @@ export const getListingData = async (page: Page): Promise<Listing[]> => {
         ).replace(/^(\d[\d,.]*)[\s\S]*$/, '$1');
         const add1: string = listing.querySelector(LISTING_ADD1_SELECTOR)?.textContent ?? '';
         const add2: string = listing.querySelector(LISTING_ADD2_SELECTOR)?.textContent ?? '';
+        const link: string =
+          `www.realtor.com${listing.querySelector('a')?.getAttribute('href')}` ?? '';
 
         return {
           price,
@@ -49,6 +51,7 @@ export const getListingData = async (page: Page): Promise<Listing[]> => {
           lotSize,
           add1,
           add2,
+          link,
         };
       })
       .filter((listing): listing is Listing => !!listing); // Filter out undefined values
