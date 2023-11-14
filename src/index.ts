@@ -1,10 +1,10 @@
 import puppeteer, { type Browser, type Page } from 'puppeteer';
 import { authenticateSheets } from './googleSheets/auth';
 // import { mockData } from './mockData';
-import { spreadsheetId } from './googleSheets/constants';
 import { getListingData } from './scraper';
 import { appendDataToSheet } from './googleSheets';
 import { QUERY_STRING } from './scraper/constants';
+import { spreadsheetId } from './secrets';
 
 const runReScraper = async (): Promise<void> => {
   // Authenticate the Google Sheets client
