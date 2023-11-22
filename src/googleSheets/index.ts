@@ -1,5 +1,5 @@
 import { type Sheets } from '../types';
-import { addressColumnIndex } from './constants';
+import { addressColumnIndex, linkColumnIndex } from './constants';
 import {
   createListingDictionaryObject,
   fetchPricesAndAddressesFromSheet,
@@ -58,6 +58,25 @@ export const appendDataToSheet = async (
     const updateRequests = [
       ...updatePriceRequests,
       ...outdatedListingFormatRequests,
+      ...data.map((row, rowIndex) => {
+        return {
+          repeatCell: {
+            range: {
+              sheetId: 0,
+              startRowIndex: rowIndex + 1,
+              endRowIndex: rowIndex + 2,
+              startColumnIndex: linkColumnIndex,
+              endColumnIndex: linkColumnIndex + 1,
+            },
+            cell: {
+              userEnteredValue: {
+                formulaValue: `=HYPERLINK("${row[linkColumnIndex]}", "listing-link")`,
+              },
+            },
+            fields: 'userEnteredValue.formulaValue',
+          },
+        };
+      }),
       {
         deleteDuplicates: {
           range: {
@@ -68,7 +87,7 @@ export const appendDataToSheet = async (
               sheetId: 0,
               dimension: 'COLUMNS',
               startIndex: addressColumnIndex,
-              endIndex: 7,
+              endIndex: addressColumnIndex + 1,
             },
           ],
         },

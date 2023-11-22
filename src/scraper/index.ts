@@ -1,61 +1,37 @@
-import { type Page } from 'puppeteer';
-import { type Listing } from '../types';
+import puppeteer, { type Browser, type Page } from 'puppeteer';
+import { authenticateSheets } from '../googleSheets/auth';
+// import { mockData } from './mockData';
+import { getListingDataFromOneHome } from './oneHome';
+import { appendDataToSheet } from '../googleSheets';
+import { QUERY_STRING, spreadsheetId } from '../secrets';
 
-export const getListingData = async (page: Page): Promise<Listing[]> => {
-  const listingData: Listing[] = await page.evaluate(() => {
-    // SELECTORS - need to be defined here within the browser context because they can't be pulled from the node context
-    const LISTING_LIST_SELECTOR = '[data-testid="card-content"]' as const;
-    const LISTING_PRICE_SELECTOR = '[data-testid="card-price"]' as const;
-    const LISTING_BEDS_SELECTOR = '[data-testid="property-meta-beds"]' as const;
-    const LISTING_BATHS_SELECTOR = '[data-testid="property-meta-baths"]' as const;
-    const LISTING_SQFT_SELECTOR = '[data-testid="property-meta-sqft"]' as const;
-    const LISTING_LOT_SELECTOR = '[data-testid="property-meta-lot-size"]' as const;
-    const LISTING_ADD1_SELECTOR = '[data-testid="card-address-1"]' as const;
-    const LISTING_ADD2_SELECTOR = '[data-testid="card-address-2"]' as const;
+export const runReScraper = async (): Promise<void> => {
+  const sheets = await authenticateSheets();
 
-    const listingList = document.querySelectorAll(LISTING_LIST_SELECTOR);
-    return Array.from(listingList)
-      .map((listing: Element) => {
-        const price: string = listing.querySelector(LISTING_PRICE_SELECTOR)?.textContent ?? '';
-        const adjustedPrice: string = (parseFloat(price.replace(/[$,]/g, '')) * 0.7).toLocaleString(
-          'en-US',
-          {
-            style: 'currency',
-            currency: 'USD',
-            maximumFractionDigits: 0,
-          },
-        );
-        const beds: string = (
-          listing.querySelector(LISTING_BEDS_SELECTOR)?.textContent ?? ''
-        ).replace(/^(\d[\d,.]*)[\s\S]*$/, '$1');
-        const baths: string = (
-          listing.querySelector(LISTING_BATHS_SELECTOR)?.textContent ?? ''
-        ).replace(/^(\d[\d,.]*)[\s\S]*$/, '$1');
-        const sqft: string = (
-          listing.querySelector(LISTING_SQFT_SELECTOR)?.textContent ?? ''
-        ).replace(/^(\d[\d,.]*)[\s\S]*$/, '$1');
-        const lotSize: string = (
-          listing.querySelector(LISTING_LOT_SELECTOR)?.textContent ?? ''
-        ).replace(/^(\d[\d,.]*)[\s\S]*$/, '$1');
-        const add1: string = listing.querySelector(LISTING_ADD1_SELECTOR)?.textContent ?? '';
-        const add2: string = listing.querySelector(LISTING_ADD2_SELECTOR)?.textContent ?? '';
-        const link: string =
-          `www.realtor.com${listing.querySelector('a')?.getAttribute('href')}` ?? '';
-
-        return {
-          price,
-          adjustedPrice,
-          beds,
-          baths,
-          sqft,
-          lotSize,
-          add1,
-          add2,
-          link,
-        };
-      })
-      .filter((listing): listing is Listing => !!listing); // Filter out undefined values
+  const browser: Browser = await puppeteer.launch({
+    headless: 'new',
+    defaultViewport: null,
   });
 
-  return listingData;
+  const page: Page = await browser.newPage();
+  await page.setUserAgent(
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/94.0.4606.81 Safari/537.36',
+  );
+
+  await page.goto(QUERY_STRING, {
+    waitUntil: 'domcontentloaded',
+  });
+  const scrapedListingData = await getListingDataFromOneHome(page);
+
+  // Convert the listing data into a format that can be appended to the Google Sheet
+  const dataToAppend: string[][] = scrapedListingData.map((item) => Object.values(item));
+
+  try {
+    console.log('6. Updating google sheet');
+    await appendDataToSheet(sheets, spreadsheetId, 'Sheet1!A2', dataToAppend);
+    console.log('7. Google sheet updated with data successfully.');
+  } catch (error) {
+    console.error('Error accessing or updating Google Sheet:', error);
+  }
+  await browser.close();
 };

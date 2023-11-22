@@ -9,7 +9,7 @@ interface DictionaryListing {
 
 export type listingDictionaryObject = Record<string, DictionaryListing>;
 
-export interface Listing {
+export interface RealtorComListing {
   price: string;
   adjustedPrice: string;
   beds: string;
@@ -18,5 +18,16 @@ export interface Listing {
   lotSize: string;
   add1: string;
   add2: string;
+  link: string;
+}
+
+export interface OneHomeListing {
+  price: string;
+  adjustedPrice: string;
+  beds: string;
+  baths: string;
+  sqft: string;
+  address: string;
+  mlsNum: string;
   link: string;
 }
