@@ -1,20 +1,29 @@
-import express, { type Request, type Response } from 'express';
+import express from 'express';
+import http from 'http';
+import { Server as WebSocketServer } from 'ws';
 import { runReScraper } from '../scraper';
 
 const app = express();
+const server = http.createServer(app);
+const wss = new WebSocketServer({ server });
+
 const port = 8080;
 
-app.get('/scrape', (_req: Request, res: Response) => {
-  runReScraper()
+wss.on('connection', (ws) => {
+  ws.on('message', (message: string) => {
+    console.log(`Received message: ${message}`);
+  });
+
+  runReScraper(ws)
     .then(() => {
-      res.send('Scraping completed successfully.');
+      ws.send('Scraping completed successfully.');
     })
     .catch((error) => {
       console.error('Error during scraping:', error);
-      res.status(500).send('Internal Server Error');
+      ws.send('Internal Server Error');
     });
 });
 
-app.listen(port, () => {
+server.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
 });

@@ -65,40 +65,80 @@
     button:disabled {
       cursor: not-allowed;
       opacity: 0.7;
+      transform: none;
+      box-shadow: none;
+    }
+
+    #status {
+      position: fixed;
+      top: 16px;
+      right: 16px;
+      background-color: #36395A;
+      color: #FCFCFD;
+      padding: 8px 16px;
+      border-radius: 4px;
+      box-shadow: rgba(45, 35, 66, 0.4) 0 2px 4px, rgba(45, 35, 66, 0.3) 0 7px 13px -3px, #D6D6E7 0 -3px 0 inset;
+      z-index: 999;
+      min-width: 350px;
+      min-height: 20px;
+      text-align: center;
     }
   </style>
 </head>
 
 <body>
   <button id="scrapeButton">Run Scraper</button>
+  <div id="status">Not Scraping</div>
+
   <script>
     const scrapeButton = document.getElementById('scrapeButton');
-    let isScraping = false;
+    const statusDiv = document.getElementById('status');
+    let ws;
+
+    const updateStatus = (message) => {
+      statusDiv.textContent = message;
+    };
+
+    const toggleDisabledButtonState = (disabled) => {
+      if (disabled) {
+        scrapeButton.disabled = true;
+        scrapeButton.innerText = 'Scraping...';
+      } else {
+        scrapeButton.disabled = false;
+        scrapeButton.innerText = 'Run Scraper';
+      }
+    };
 
     scrapeButton.addEventListener('click', async () => {
-      if (isScraping) {
-        console.log('Scraping is already in progress. Please wait.');
-        return;
-      }
+      toggleDisabledButtonState(true);
+      updateStatus("Loading scraper...");
 
-      try {
-        isScraping = true;
+      ws = new WebSocket('ws://localhost:8080');
+      ws.onopen = () => {
+        console.log('WebSocket connection established.');
+        ws.send('Scraping...');
+      };
 
-        scrapeButton.disabled = true;
-        scrapeButton.textContent = 'Scraping...';
+      ws.onmessage = (event) => {
+        const statusMessage = event.data;
+        console.log('Received message from server:', statusMessage);
+        updateStatus(statusMessage);
+      };
 
-        const response = await fetch('http://localhost:8080/scrape');
-        const result = await response.text();
-        console.log(result);
-      } catch (error) {
-        console.error('Error triggering scraper:', error);
-      } finally {
-        isScraping = false;
-        scrapeButton.disabled = false;
-        scrapeButton.textContent = 'Run Scraper';
-      }
+      ws.onclose = () => {
+        console.log('WebSocket connection closed.');
+        toggleDisabledButtonState(false);
+        updateStatus('Not Scraping');
+      };
+
+      ws.onerror = (error) => {
+        console.error('WebSocket error:', error);
+        toggleDisabledButtonState(false);
+        updateStatus(`Error: ${error.message}`);
+      };
     });
   </script>
 </body>
+
 
 </html>

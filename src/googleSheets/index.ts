@@ -1,8 +1,10 @@
 import { type Sheets } from '../types';
-import { addressColumnIndex, linkColumnIndex } from './constants';
+import { addressColumnIndex } from './constants';
 import {
   createListingDictionaryObject,
   fetchPricesAndAddressesFromSheet,
+  generateHyperLinks,
+  nonBoldValuesRequest,
   strikethroughOutdatedListings,
   updatePriceCellsRequests,
 } from './utils';
@@ -43,6 +45,9 @@ export const appendDataToSheet = async (
       },
     });
 
+    const unBoldRequests = nonBoldValuesRequest(data);
+    const hyperlinkRequests = generateHyperLinks(data);
+
     const { outdatedListingFormatRequests } = strikethroughOutdatedListings(
       flattenedAddresses,
       data,
@@ -56,27 +61,10 @@ export const appendDataToSheet = async (
     );
 
     const updateRequests = [
+      ...unBoldRequests,
+      ...hyperlinkRequests,
       ...updatePriceRequests,
       ...outdatedListingFormatRequests,
-      ...data.map((row, rowIndex) => {
-        return {
-          repeatCell: {
-            range: {
-              sheetId: 0,
-              startRowIndex: rowIndex + 1,
-              endRowIndex: rowIndex + 2,
-              startColumnIndex: linkColumnIndex,
-              endColumnIndex: linkColumnIndex + 1,
-            },
-            cell: {
-              userEnteredValue: {
-                formulaValue: `=HYPERLINK("${row[linkColumnIndex]}", "listing-link")`,
-              },
-            },
-            fields: 'userEnteredValue.formulaValue',
-          },
-        };
-      }),
       {
         deleteDuplicates: {
           range: {
@@ -94,7 +82,7 @@ export const appendDataToSheet = async (
       },
     ];
 
-    // Remove dupes, update prices, strikethrough old data
+    // Remove dupes, update prices, strikethrough old data, unbold new data, and create hyperlinks from listing URLs
     const batchUpdateRequest = {
       spreadsheetId,
       resource: {

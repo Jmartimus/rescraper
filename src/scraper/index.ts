@@ -4,8 +4,10 @@ import { authenticateSheets } from '../googleSheets/auth';
 import { getListingDataFromOneHome } from './oneHome';
 import { appendDataToSheet } from '../googleSheets';
 import { QUERY_STRING, spreadsheetId } from '../secrets';
+import type WebSocket from 'ws';
+import { STATUS_MESSAGES } from './constants';
 
-export const runReScraper = async (): Promise<void> => {
+export const runReScraper = async (ws: WebSocket): Promise<void> => {
   const sheets = await authenticateSheets();
 
   const browser: Browser = await puppeteer.launch({
@@ -21,17 +23,29 @@ export const runReScraper = async (): Promise<void> => {
   await page.goto(QUERY_STRING, {
     waitUntil: 'domcontentloaded',
   });
-  const scrapedListingData = await getListingDataFromOneHome(page);
+  const scrapedListingData = await getListingDataFromOneHome(page, ws);
 
   // Convert the listing data into a format that can be appended to the Google Sheet
   const dataToAppend: string[][] = scrapedListingData.map((item) => Object.values(item));
 
   try {
-    console.log('6. Updating google sheet');
+    console.log(STATUS_MESSAGES.STEP_6);
+    ws.send(STATUS_MESSAGES.STEP_6);
     await appendDataToSheet(sheets, spreadsheetId, 'Sheet1!A2', dataToAppend);
-    console.log('7. Google sheet updated with data successfully.');
+    console.log(STATUS_MESSAGES.STEP_7);
+    ws.send(STATUS_MESSAGES.STEP_7);
   } catch (error) {
-    console.error('Error accessing or updating Google Sheet:', error);
+    if (error instanceof Error) {
+      console.error('Error accessing or updating Google Sheet:', error);
+      ws.send(`Error: ${error.message}`);
+    } else {
+      console.error('Unexpected error type accessing or updating Google Sheet:', error);
+      ws.send(`Unexpected error type: ${typeof error}`);
+    }
+  } finally {
+    await browser.close();
+    console.log(STATUS_MESSAGES.STEP_8);
+    ws.send(STATUS_MESSAGES.STEP_8);
+    ws.close();
   }
-  await browser.close();
 };

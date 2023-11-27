@@ -1,8 +1,13 @@
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 import { type Page } from 'puppeteer';
 import { type OneHomeListing } from '../../types';
+import type WebSocket from 'ws';
+import { STATUS_MESSAGES } from '../constants';
 
-export const getListingDataFromOneHome = async (page: Page): Promise<OneHomeListing[]> => {
+export const getListingDataFromOneHome = async (
+  page: Page,
+  ws: WebSocket,
+): Promise<OneHomeListing[]> => {
   // 1. wait for close button
   const CLOSE_BUTTON_SELECTOR = '[data-test-id="close-button"]';
   await page.waitForSelector(CLOSE_BUTTON_SELECTOR);
@@ -15,7 +20,8 @@ export const getListingDataFromOneHome = async (page: Page): Promise<OneHomeList
       closeButton.click();
     }
   });
-  console.log('1. Closed intro modal');
+  console.log(STATUS_MESSAGES.STEP_1);
+  ws.send(STATUS_MESSAGES.STEP_1);
 
   // 3. Wait for the map toggle
   const MAP_TOGGLE_SELECTOR = '[class="switch-wrapper"]';
@@ -29,7 +35,8 @@ export const getListingDataFromOneHome = async (page: Page): Promise<OneHomeList
       toggleMap.click();
     }
   });
-  console.log('2. Closed map screen');
+  console.log(STATUS_MESSAGES.STEP_2);
+  ws.send(STATUS_MESSAGES.STEP_2);
 
   // 5. Close pesky feedback modal if it appears
   const maxWaitTime = 5000;
@@ -44,12 +51,15 @@ export const getListingDataFromOneHome = async (page: Page): Promise<OneHomeList
     }
   };
   await closeModal();
-  console.log('3. Closed feedback modal');
+  console.log(STATUS_MESSAGES.STEP_3);
+  ws.send(STATUS_MESSAGES.STEP_3);
 
   // 6. Wait for load more button and click multiple times
   const LOAD_MORE_SELECTOR = '[class="button small primary collapse"]';
   await page.waitForSelector(LOAD_MORE_SELECTOR);
   const clickCount = 5;
+  console.log(STATUS_MESSAGES.STEP_4);
+  ws.send(STATUS_MESSAGES.STEP_4);
   for (let i = 0; i < clickCount; i++) {
     try {
       await page.waitForSelector(LOAD_MORE_SELECTOR, { timeout: maxWaitTime });
@@ -58,10 +68,10 @@ export const getListingDataFromOneHome = async (page: Page): Promise<OneHomeList
       break;
     }
   }
-  console.log('4. Clicked load more button until it disappeared');
 
+  console.log(STATUS_MESSAGES.STEP_5);
+  ws.send(STATUS_MESSAGES.STEP_5);
   const listingData: OneHomeListing[] = await page.evaluate(() => {
-    console.log('5. Scraping data');
     // SELECTORS - need to be defined here within the browser context because they can't be pulled from the node context
     const LISTING_LIST_SELECTOR = '[class="property-content tile property"]';
     const LISTING_PRICE_SELECTOR = '[class="price"]';

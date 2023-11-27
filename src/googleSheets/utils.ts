@@ -1,6 +1,11 @@
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 import { type listingDictionaryObject, type Sheets } from '../types';
-import { addressColumnRange, addressIndexFromData, priceColumnRange } from './constants';
+import {
+  addressColumnRange,
+  addressIndexFromData,
+  linkColumnIndex,
+  priceColumnRange,
+} from './constants';
 
 /**
  * Fetches prices and addresses data from a Google Sheet.
@@ -174,3 +179,61 @@ export const updatePriceCellsRequests = (
     .filter(Boolean)
     .flat();
 };
+
+/**
+ * Generates a batch update request to set the text format for each cell in a specified range
+ * to ensure nothing is bolded.
+ *
+ * @param {string[][]} data - Array of data to determine the range size.
+ * @returns {Object[]} Batch update request array.
+ */
+export const nonBoldValuesRequest = (data: string[][]) =>
+  data.map((row, rowIndex) => {
+    return {
+      repeatCell: {
+        range: {
+          sheetId: 0,
+          startRowIndex: rowIndex + 1,
+          endRowIndex: rowIndex + 2,
+          startColumnIndex: 0,
+          endColumnIndex: row.length,
+        },
+        cell: {
+          userEnteredFormat: {
+            textFormat: {
+              bold: false,
+            },
+          },
+        },
+        fields: 'userEnteredFormat.textFormat.bold',
+      },
+    };
+  });
+
+/**
+ * Generates repeatCell requests for creating hyperlinks in a Google Sheet.
+ *
+ * @param {string[][]} data - Array of data containing links.
+ * @param {number} linkColumnIndex - Index of the column containing link URLs.
+ * @returns {object[]} Array of repeatCell requests for hyperlink creation.
+ */
+export const generateHyperLinks = (data: string[][]) =>
+  data.map((row, rowIndex) => {
+    return {
+      repeatCell: {
+        range: {
+          sheetId: 0,
+          startRowIndex: rowIndex + 1,
+          endRowIndex: rowIndex + 2,
+          startColumnIndex: linkColumnIndex,
+          endColumnIndex: linkColumnIndex + 1,
+        },
+        cell: {
+          userEnteredValue: {
+            formulaValue: `=HYPERLINK("${row[linkColumnIndex]}", "listing-link")`,
+          },
+        },
+        fields: 'userEnteredValue.formulaValue',
+      },
+    };
+  });
