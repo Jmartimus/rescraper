@@ -5,6 +5,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script>var exports = {};</script>
   <title>Scraping Trigger</title>
 
   <style>
@@ -83,61 +84,51 @@
       min-height: 20px;
       text-align: center;
     }
+
+    #loginForm {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
+
+    #loginForm input {
+      margin-bottom: 10px;
+      padding: 8px;
+      font-size: 16px;
+    }
+
+    #scraperControls {
+      display: none;
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    #authStatus {
+      color: red;
+      margin-top: 10px;
+    }
   </style>
 </head>
 
 <body>
-  <button id="scrapeButton">Run Scraper</button>
-  <div id="status">Not Scraping</div>
+  <form id="loginForm">
+    <h2>Login</h2>
+    <input type="text" id="username" name="username" placeholder="username">
+    <input type="password" id="password" name="password" placeholder="password">
+    <br>
+    <button type="button" id="loginButton">Login</button>
+    <div id="authStatus"></div>
+  </form>
 
-  <script>
-    const scrapeButton = document.getElementById('scrapeButton');
-    const statusDiv = document.getElementById('status');
-    let ws;
 
-    const updateStatus = (message) => {
-      statusDiv.textContent = message;
-    };
+  <div id="scraperControls">
+    <button id="scrapeButton" disabled>Run Scraper</button>
+    <div id="status">Not Scraping</div>
+  </div>
 
-    const toggleDisabledButtonState = (disabled) => {
-      if (disabled) {
-        scrapeButton.disabled = true;
-        scrapeButton.innerText = 'Scraping...';
-      } else {
-        scrapeButton.disabled = false;
-        scrapeButton.innerText = 'Run Scraper';
-      }
-    };
-
-    scrapeButton.addEventListener('click', async () => {
-      toggleDisabledButtonState(true);
-      updateStatus("Loading scraper...");
-
-      ws = new WebSocket('ws://localhost:8080');
-      ws.onopen = () => {
-        console.log('WebSocket connection established.');
-        ws.send('Scraping...');
-      };
-
-      ws.onmessage = (event) => {
-        const statusMessage = event.data;
-        console.log('Received message from server:', statusMessage);
-        updateStatus(statusMessage);
-      };
-
-      ws.onclose = () => {
-        console.log('WebSocket connection closed.');
-        toggleDisabledButtonState(false);
-        updateStatus('Not Scraping');
-      };
-
-      ws.onerror = (error) => {
-        console.error('WebSocket error:', error);
-        toggleDisabledButtonState(false);
-        updateStatus(`Error: ${error.message}`);
-      };
-    });
-  </script>
+  <script src="../dist/script.js"></script>
 </body>
 
 

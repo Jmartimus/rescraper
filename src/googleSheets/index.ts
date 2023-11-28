@@ -61,10 +61,6 @@ export const appendDataToSheet = async (
     );
 
     const updateRequests = [
-      ...unBoldRequests,
-      ...hyperlinkRequests,
-      ...updatePriceRequests,
-      ...outdatedListingFormatRequests,
       {
         deleteDuplicates: {
           range: {
@@ -80,6 +76,10 @@ export const appendDataToSheet = async (
           ],
         },
       },
+      ...unBoldRequests,
+      ...updatePriceRequests,
+      ...outdatedListingFormatRequests,
+      ...hyperlinkRequests,
     ];
 
     // Remove dupes, update prices, strikethrough old data, unbold new data, and create hyperlinks from listing URLs

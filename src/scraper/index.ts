@@ -5,7 +5,7 @@ import { getListingDataFromOneHome } from './oneHome';
 import { appendDataToSheet } from '../googleSheets';
 import { QUERY_STRING, spreadsheetId } from '../secrets';
 import type WebSocket from 'ws';
-import { STATUS_MESSAGES } from './constants';
+import { STATUS_MESSAGES } from '../constants';
 
 export const runReScraper = async (ws: WebSocket): Promise<void> => {
   const sheets = await authenticateSheets();

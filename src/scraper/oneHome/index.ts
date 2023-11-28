@@ -2,7 +2,7 @@
 import { type Page } from 'puppeteer';
 import { type OneHomeListing } from '../../types';
 import type WebSocket from 'ws';
-import { STATUS_MESSAGES } from '../constants';
+import { STATUS_MESSAGES } from '../../constants';
 
 export const getListingDataFromOneHome = async (
   page: Page,

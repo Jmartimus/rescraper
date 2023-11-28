@@ -8,3 +8,8 @@ export enum STATUS_MESSAGES {
   STEP_7 = '7. Google sheet updated with data successfully.',
   STEP_8 = '8. Scraping completed.',
 }
+
+export enum AUTH_MESSAGES {
+  SUCCESS = 'Authentication successful.',
+  DENIED = 'Authentication failed. User not allowed.',
+}
