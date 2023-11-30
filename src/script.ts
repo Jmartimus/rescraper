@@ -1,4 +1,5 @@
-import { AUTH_MESSAGES } from './constants';
+// eslint-disable-next-line import/no-unresolved
+import { AUTH_MESSAGES } from './constants.js';
 
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 const loginForm = document.getElementById('loginForm') as HTMLFormElement;
@@ -11,6 +12,7 @@ const statusDiv = document.getElementById('status') as HTMLDivElement;
 const authStatusDiv = document.getElementById('authStatus') as HTMLDivElement;
 // eslint-disable-next-line prefer-const
 let ws: WebSocket;
+let scrapingCompleted = false;
 
 const updateStatus = (message: string) => {
   statusDiv.textContent = message;
@@ -22,7 +24,7 @@ const updateAuthStatus = (message: string) => {
 
 const toggleDisabledButtonState = (disabled: boolean) => {
   scrapeButton.disabled = disabled;
-  scrapeButton.innerText = disabled ? 'Scraping...' : 'Run Scraper';
+  scrapeButton.innerText = disabled ? 'Scraping...' : 'Scrape';
 };
 
 loginButton.addEventListener('click', () => {
@@ -34,10 +36,15 @@ loginButton.addEventListener('click', () => {
 });
 
 scrapeButton.addEventListener('click', () => {
-  toggleDisabledButtonState(true);
-  updateStatus('Loading scraper...');
-
-  ws.send('Scraping...');
+  if (scrapingCompleted) {
+    scrapeButton.disabled = true;
+    scrapeButton.innerText = 'Reloading...';
+    location.reload();
+  } else {
+    toggleDisabledButtonState(true);
+    updateStatus('Loading scraper...');
+    ws.send('Scraping...');
+  }
 });
 
 // WebSocket setup
@@ -53,7 +60,7 @@ ws.onmessage = (event) => {
   if (message.startsWith(AUTH_MESSAGES.SUCCESS)) {
     // Hide login form and show scraper controls
     loginForm.style.display = 'none';
-    scraperControls.style.display = 'block';
+    scraperControls.style.display = 'flex';
     toggleDisabledButtonState(false);
     updateAuthStatus(AUTH_MESSAGES.SUCCESS);
   } else if (message.startsWith(AUTH_MESSAGES.DENIED)) {
@@ -66,7 +73,9 @@ ws.onmessage = (event) => {
 ws.onclose = () => {
   console.log('WebSocket connection closed.');
   toggleDisabledButtonState(false);
-  updateStatus('Not Scraping');
+  updateStatus('Scraping completed!');
+  scrapingCompleted = true;
+  scrapeButton.innerText = 'Reload page';
 };
 
 ws.onerror = (error) => {

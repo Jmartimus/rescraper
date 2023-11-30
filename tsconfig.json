@@ -14,6 +14,10 @@
     "resolveJsonModule": true,
     "baseUrl": "src"
   },
+  "tsc-alias": {
+    "resolveFullPaths": true,
+    "verbose": false
+  },
   "include": ["src/**/*.ts"],
   "exclude": ["dist", "node_modules"]
 }

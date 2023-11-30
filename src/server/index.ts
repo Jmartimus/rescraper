@@ -1,6 +1,6 @@
 import express from 'express';
 import http from 'http';
-import { Server as WebSocketServer } from 'ws';
+import { WebSocketServer } from 'ws';
 import { runReScraper } from '../scraper';
 import { type AuthorizedWebSocket, authenticateUser } from './authenticate';
 
