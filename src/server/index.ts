@@ -29,6 +29,11 @@ wss.on('connection', (ws: AuthorizedWebSocket) => {
   });
 });
 
+// HTTP server setup
+app.get('/', (req, res) => {
+  res.send('WebSocket server is running');
+});
+
 server.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
 });

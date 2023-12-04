@@ -8,7 +8,7 @@
     "strict": true,
     "skipLibCheck": true,
     "skipDefaultLibCheck": true,
-    "outDir": "./dist",
+    "outDir": "./public/dist",
     "rootDir": "./src",
     "removeComments": true,
     "resolveJsonModule": true,
