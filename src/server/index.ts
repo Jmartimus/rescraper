@@ -8,6 +8,8 @@ const app = express();
 const server = http.createServer(app);
 const wss = new WebSocketServer({ server });
 
+app.use(express.static('public'));
+
 const port = 8080;
 
 wss.on('connection', (ws: AuthorizedWebSocket) => {
@@ -27,11 +29,6 @@ wss.on('connection', (ws: AuthorizedWebSocket) => {
         });
     }
   });
-});
-
-// HTTP server setup
-app.get('/', (req, res) => {
-  res.send('WebSocket server is running');
 });
 
 server.listen(port, () => {

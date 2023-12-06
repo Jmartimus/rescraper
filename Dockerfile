@@ -50,4 +50,4 @@ COPY --from=build /public/dist /public/dist
 # Start the server by default, this can be overwritten at runtime
 EXPOSE 8080
 ENV PUPPETEER_EXECUTABLE_PATH="/usr/bin/chromium"
-CMD [ "yarn", "run" "start" ]
+CMD [ "yarn", "run", "start" ]

@@ -1,4 +1,4 @@
-import puppeteer, { type Browser, type Page } from 'puppeteer';
+import puppeteer, { type Page } from 'puppeteer';
 import { authenticateSheets } from '../googleSheets/auth';
 // import { mockData } from './mockData';
 import { getListingDataFromOneHome } from './oneHome';
@@ -10,8 +10,9 @@ import { STATUS_MESSAGES } from '../constants';
 export const runReScraper = async (ws: WebSocket): Promise<void> => {
   const sheets = await authenticateSheets();
 
-  const browser: Browser = await puppeteer.launch({
+  const browser = await puppeteer.launch({
     headless: 'new',
+    args: ['--no-sandbox', '--disable-setuid-sandbox'],
     defaultViewport: null,
   });
 
