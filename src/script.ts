@@ -46,9 +46,13 @@ scrapeButton.addEventListener('click', () => {
     ws.send('Scraping...');
   }
 });
-// Local WS url - 'ws://localhost:8080', prod URL - 'wss://rescraper.fly.dev/'
 
-ws = new WebSocket('wss://rescraper.fly.dev/');
+const WS_URL =
+  window.location.hostname === 'rescraper.fly.dev'
+    ? 'wss://rescraper.fly.dev/'
+    : 'ws://localhost:8080';
+
+ws = new WebSocket(WS_URL);
 ws.onopen = () => {
   console.log('WebSocket connection established.');
 };
