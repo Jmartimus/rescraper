@@ -50,4 +50,5 @@ To deploy the project using Fly.io:
 
 1. Sign up for a Fly.io account if you haven't already.
 2. Follow Fly.io documentation to set up your application.
-3. Update the necessary configuration files for deployment, such as fly.toml.
+3. Update the necessary configuration files for deployment, such as fly.toml and run `fly deploy` to redeploy app with new changes.
+**Just because you merge code, does not mean this gets redeployed**
